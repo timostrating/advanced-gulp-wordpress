@@ -61,9 +61,9 @@ try {
     ftpInfo.user = configFile.user;
     ftpInfo.password = configFile.password;
     ftpInfo.parallel = configFile.parallel;
+    ftpInfo.path = configFile.path;
 }
 catch(ex) {} // Use default values in this file if .json isn't there
-console.log(ftpInfo);
 
 
 /**
@@ -295,17 +295,17 @@ gulp.task('zip', ['styles', 'vendorsJs', 'scriptsJs', 'images', 'buildFiles'], f
   *
   * Uploads the build folder, which has been cleaned and optimized, to a FTP server
   */
-gulp.task('ftp', ['clean'], function () {
-    var conn = ftp.create( {
+gulp.task('ftp', function () {
+    var conn = ftp.create({
         host: ftpInfo.host,
         user: ftpInfo.user,
         password: ftpInfo.password,
         parallel: ftpInfo.parallel, // Max # of parallel connections
         log: $.util.log
-    } );
-    return gulp.src(temp + '/**/', { base: '.', buffer: false })
-        // .pipe(conn.newer(path)) // only upload newer files
-        .pipe(conn.dest(path))
+    });
+    return gulp.src(temp + '/**/*', { base: '.tmp/', buffer: false })
+        // .pipe(conn.newer(ftpInfo.path)) // only upload newer files
+        .pipe(conn.dest(ftpInfo.path))
         //.pipe($.notify({ message: 'FTP task complete', onLast: true }));
 });
 

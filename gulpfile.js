@@ -133,7 +133,11 @@ gulp.task('bowerFiles', function() {
             precision: 10
         }))
         .pipe($.concat('vendor.css'))
-        .pipe(gulp.dest(temp + '/assets/css'))
+        .pipe($.rename({ suffix: '.min' }))
+        .pipe($.uglifycss({
+            maxLineLen: 80
+        }))
+        .pipe(gulp.dest(temp + '/assets/css')) // Comment if unminified source should not be in the build output
         .pipe(cssFilter.restore)
         .pipe(fontFilter)
         .pipe(gulp.dest(temp + '/assets/fonts'))
@@ -162,7 +166,7 @@ gulp.task('styles', ['bowerFiles'], function () {
     .pipe($.autoprefixer('last 2 version', '> 1%', 'safari 5', 'ie 8', 'ie 9', 'opera 12.1', 'ios 6', 'android 4'))
     .pipe($.sourcemaps.write('.'))
     .pipe($.plumber.stop())
-    // .pipe(gulp.dest(temp + '/assets/css')) // Comment if unminified source should not be in the build output
+    .pipe(gulp.dest(temp))
     .pipe($.filter('**/*.css')) // Filtering stream to only css files
     .pipe($.combineMediaQueries()) // Combines Media Queries
     .pipe(reload({ stream:true })) // Inject Styles when style file is created
@@ -170,7 +174,7 @@ gulp.task('styles', ['bowerFiles'], function () {
     .pipe($.uglifycss({
         maxLineLen: 80
     }))
-    .pipe(gulp.dest(temp + '/assets/css'))
+    .pipe(gulp.dest(temp))
     .pipe(reload({stream:true})) // Inject Styles when min style file is created
     //.pipe($.notify({ message: 'Styles task complete', onLast: true }))
 });
@@ -304,8 +308,8 @@ gulp.task('ftp', function () {
         log: $.util.log
     });
     return gulp.src(temp + '/**/*', { base: '.tmp/', buffer: false })
-        // .pipe(conn.newer(ftpInfo.path)) // only upload newer files
-        .pipe(conn.dest(ftpInfo.path))
+        .pipe(conn.newer(ftpInfo.path)) // Only upload newer files
+        // .pipe(conn.dest(ftpInfo.path))
         //.pipe($.notify({ message: 'FTP task complete', onLast: true }));
 });
 

@@ -1,10 +1,11 @@
 {
-  "name": "neat",
+  "name": "neatBootstrap",
   "version": "1.0.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ahmadawais/neat"
+    "url": "https://github.com/danyim/advanced-gulp-wordpress"
   },
+  "license": "SEE LICENSE IN LICENSE",
   "dependencies": {},
   "devDependencies": {
     "browser-sync": "^2.4.0",

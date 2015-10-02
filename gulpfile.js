@@ -4,11 +4,11 @@
  *
  * @since 1.0.0
  * @authors Ahmad Awais, @digisavvy, @desaiuditd, @jb510, @dmassiani, @Maxlopez and @danyim
- * @package neat
+ * @package NeatBootstrap
  */
 
 // Project configuration
-var project = 'neat', // Project name, used for build zip.
+var project = 'neatBootstrap', // Project name, used for build zip.
     url             = 'neat.dev', // Local Development URL for BrowserSync. Change as-needed.
     bower           = 'src/bower_components/'; // Not truly using this yet, more or less playing right now. TO-DO Place in Dev branch
     build           = 'dist', // Files that you want to package into a zip go here

@@ -2,7 +2,7 @@
 /**
  * Neat functions and definitions
  *
- * @package Neat
+ * @package NeatBootstrap
  */
 
 /**

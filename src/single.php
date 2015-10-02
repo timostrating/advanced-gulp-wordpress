@@ -2,7 +2,7 @@
 /**
  * The template for displaying all single posts.
  *
- * @package Neat
+ * @package NeatBootstrap
  */
 
 get_header(); ?>

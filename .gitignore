@@ -5,3 +5,4 @@ assets/bower_components
 buildtheme/**/*
 *.zip
 *.map
+.tmp

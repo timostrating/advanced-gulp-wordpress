@@ -110,7 +110,9 @@ gulp.task('bowerFiles', function() {
         }))
         .pipe(jsFilter)
         .pipe($.concat('vendor.js'))
-        .pipe(gulp.dest(temp + '/assets/js'))
+        // Write the JS files back into the src directory for processing later
+        // via the vendorsJs task
+        .pipe(gulp.dest('src/assets/js/vendor'))
         .pipe(jsFilter.restore)
         .pipe(cssFilter)
         .pipe($.sass({
@@ -163,17 +165,22 @@ gulp.task('styles', ['bowerFiles'], function () {
     //.pipe($.notify({ message: 'Styles task complete', onLast: true }))
 });
 
-gulp.task('vendorsJs', function() {
+/**
+ * Scripts: Vendors
+ *
+ * Look at src/assets/js/vendor and concatenate those files, send them to assets/js where we then minimize the concatenated file.
+ */
+gulp.task('vendorsJs', ['bowerFiles'], function() {
     return gulp.src('src/assets/js/vendor/*.js')
         .pipe($.filter('*.js'))
         .pipe($.concat('vendors.js'))
         .pipe(gulp.dest(temp + '/assets/js'))
-        // .pipe($.rename( {
-        //     basename: 'vendors',
-        //     suffix: '.min'
-        // }))
-        // .pipe($.uglify())
-        // .pipe(gulp.dest(temp + '/assets/js/'))
+        .pipe($.rename( {
+            basename: 'vendors',
+            suffix: '.min'
+        }))
+        .pipe($.uglify())
+        .pipe(gulp.dest(temp + '/assets/js/'))
         //.pipe($.notify({ message: 'Vendor scripts task complete', onLast: true }));
 });
 

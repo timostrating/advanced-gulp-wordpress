@@ -15,33 +15,35 @@ var project = 'neat', // Project name, used for build zip.
     temp            = '.tmp', // Temporary folder where all the CSS will go
     buildInclude    = [
         // include common file types
-        '**/*.php',
-        '**/*.html',
-        '**/*.css',
-        '**/*.js',
-        '**/*.svg',
-        '**/*.ttf',
-        '**/*.otf',
-        '**/*.eot',
-        '**/*.woff',
-        '**/*.woff2',
+        'src/**/*.php',
+        'src/src/**/*.html',
+        'src/**/*.css',
+        'src/**/*.js',
+        'src/**/*.svg',
+        'src/**/*.ttf',
+        'src/**/*.otf',
+        'src/**/*.eot',
+        'src/**/*.woff',
+        'src/**/*.woff2',
 
         // include specific files and folders
         'screenshot.png',
 
         // exclude files and folders
         '!node_modules/**/*',
-        '!assets/bower_components/**/*',
-        '!style.css.map',
-        '!assets/js/custom/*',
-        '!assets/css/partials/*'
+        '!src/bower_components/**/*',
+        // '!style.css.map',
+        '!src/assets/css/**/*',
+        '!src/assets/img/**/*',
+        '!src/assets/js/**/*'
     ],
     // Optional FTP connection information (do not check this in)
     ftpInfo = {
         host:     'ftp.mysite.com',
         user:     'my@user.name',
         password: 'mypass',
-        parallel: 5 // Max # of parallel connections
+        parallel: 5, // Max # of parallel connections
+        path: '/blog/wp-content/themes/bootstrap'
     };
 
 // Load plugins
@@ -52,6 +54,17 @@ var gulp         = require('gulp'),
     browserSync  = require('browser-sync'), // Asynchronous browser loading on .scss file changes
     reload       = browserSync.reload,
     ftp          = require('vinyl-ftp');
+// Read FTP configuration file if it exists
+try {
+    var configFile = require('./ftp-config.json');
+    ftpInfo.host = configFile.host;
+    ftpInfo.user = configFile.user;
+    ftpInfo.password = configFile.password;
+    ftpInfo.parallel = configFile.parallel;
+}
+catch(ex) {} // Use default values in this file if .json isn't there
+console.log(ftpInfo);
+
 
 /**
  * Browser Sync
@@ -149,7 +162,7 @@ gulp.task('styles', ['bowerFiles'], function () {
     .pipe($.autoprefixer('last 2 version', '> 1%', 'safari 5', 'ie 8', 'ie 9', 'opera 12.1', 'ios 6', 'android 4'))
     .pipe($.sourcemaps.write('.'))
     .pipe($.plumber.stop())
-    .pipe(gulp.dest(temp + '/assets/css'))
+    // .pipe(gulp.dest(temp + '/assets/css')) // Comment if unminified source should not be in the build output
     .pipe($.filter('**/*.css')) // Filtering stream to only css files
     .pipe($.combineMediaQueries()) // Combines Media Queries
     .pipe(reload({ stream:true })) // Inject Styles when style file is created
@@ -171,7 +184,7 @@ gulp.task('vendorsJs', ['bowerFiles'], function() {
     return gulp.src('src/assets/js/vendor/*.js')
         .pipe($.filter('*.js'))
         .pipe($.concat('vendors.js'))
-        // .pipe(gulp.dest(temp + '/assets/js'))
+        // .pipe(gulp.dest(temp + '/assets/js')) // Comment if unminified source should not be in the build output
         .pipe($.rename( {
             basename: 'vendors',
             suffix: '.min'
@@ -188,17 +201,28 @@ gulp.task('vendorsJs', ['bowerFiles'], function() {
  *
  * Look at src/js and concatenate those files, send them to assets/js where we then minimize the concatenated file.
  */
-gulp.task('scriptsJs', function() {
-    return gulp.src(['src/assets/js/**/*.js', '!src/assets/js/vendor/**/*', ])
-        .pipe($.concat('script.js'))
-        // .pipe(gulp.dest(temp + '/assets/js'))
+gulp.task('scriptsJs', ['wpScriptsJs'], function() {
+    return gulp.src(['src/assets/js/**/*.js', '!src/assets/js/vendor/**/*', '!src/assets/js/{html5shiv,respond.min}.js'])
+        .pipe($.concat('scripts.js'))
+        // .pipe(gulp.dest(temp + '/assets/js')) // Comment if unminified source should not be in the build output
         .pipe($.rename( {
-            basename: 'script',
+            basename: 'scripts',
             suffix: '.min'
         }))
         .pipe($.uglify({
             preserveComments: $.uglifySaveLicense
         }))
+        .pipe(gulp.dest(temp + '/assets/js/'))
+        //.pipe($.notify({ message: 'Custom scripts task complete', onLast: true }));
+});
+
+/**
+ * Scripts: WP Custom
+ *
+ * Special files refreenced in aa_scripts_styles.php for certain browsers
+ */
+gulp.task('wpScriptsJs', function() {
+    return gulp.src('src/assets/js/{html5shiv,respond.min}.js')
         .pipe(gulp.dest(temp + '/assets/js/'))
         //.pipe($.notify({ message: 'Custom scripts task complete', onLast: true }));
 });
@@ -233,13 +257,7 @@ gulp.task('clear', function () {
   * clearing out unoptimized image files in zip as those will have been moved and optimized
   */
 gulp.task('clean', function() {
-    return gulp.src([temp + '**/*', '**/.sass-cache', build, project + '.zip'], { read: false }) // much faster
-        .pipe($.ignore('node_modules/**')) //Example of a directory to ignore
-        .pipe($.rimraf({ force: true }))
-        //.pipe(notify({ message: 'Clean task complete', onLast: true }));
-});
-gulp.task('cleanFinal', function() {
-    return gulp.src(['./assets/bower_components','**/.sass-cache','**/.DS_Store'], { read: false }) // much faster
+    return gulp.src([temp, '.sass-cache', project + '.zip'], { read: false }) // much faster
         .pipe($.ignore('node_modules/**')) //Example of a directory to ignore
         .pipe($.rimraf({ force: true }))
         //.pipe(notify({ message: 'Clean task complete', onLast: true }));
@@ -252,7 +270,7 @@ gulp.task('cleanFinal', function() {
   * buildImages copies all the images from img folder in assets while ignoring images inside raw folder if any
   */
 gulp.task('buildFiles', function() {
-    return gulp.src(['src/**/*.{php,html}', '!src/bower_components/**/*'])
+    return gulp.src(buildInclude)
         .pipe(gulp.dest(temp))
         //.pipe($.notify({ message: 'Copy from buildFiles complete', onLast: true }));
 });
@@ -285,10 +303,9 @@ gulp.task('ftp', ['clean'], function () {
         parallel: ftpInfo.parallel, // Max # of parallel connections
         log: $.util.log
     } );
-    //return gulp.src([build + '/**/', './.jshintrc', './.bowerrc', './.gitignore' ], { base: '.', buffer: false })
-    return gulp.src(build + '/**/', { base: '.', buffer: false })
-        // .pipe(conn.newer('/public_html')) // only upload newer files
-        .pipe(conn.dest('/public_html'))
+    return gulp.src(temp + '/**/', { base: '.', buffer: false })
+        // .pipe(conn.newer(path)) // only upload newer files
+        .pipe(conn.dest(path))
         //.pipe($.notify({ message: 'FTP task complete', onLast: true }));
 });
 

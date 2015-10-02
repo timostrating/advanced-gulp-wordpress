@@ -1,8 +1,8 @@
 .DS_Store
-node_modules
-assets/bower_components
 .sass-cache
-buildtheme/**/*
+assets/bower_components
+node_modules
 *.zip
 *.map
 .tmp
+ftp-config.json

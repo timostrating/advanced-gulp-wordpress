@@ -309,7 +309,7 @@ gulp.task('ftp', function () {
     });
     return gulp.src(temp + '/**/*', { base: '.tmp/', buffer: false })
         .pipe(conn.newer(ftpInfo.path)) // Only upload newer files
-        // .pipe(conn.dest(ftpInfo.path))
+        .pipe(conn.dest(ftpInfo.path))
         //.pipe($.notify({ message: 'FTP task complete', onLast: true }));
 });
 
@@ -359,7 +359,12 @@ gulp.task('build:ftp', ['build', 'ftp']);
 // });
 
 // Watch Task
-gulp.task('default', ['build', 'browser-sync'], function () {
+gulp.task('default', ['watch'], function () {
+
+});
+
+gulp.task('watch', function () {
+    gulp.watch(buildInclude, ['buildFiles']);
     gulp.watch('src/assets/img/**/*', ['images']);
     gulp.watch('src/assets/css/**/*.scss', ['styles']);
     gulp.watch('src/assets/js/**/*.js', ['scriptsJs', browserSync.reload]);

@@ -141,10 +141,7 @@ gulp.task('styles', ['bowerFiles'], function () {
     .pipe($.sourcemaps.init())
     .pipe($.sass({
         errLogToConsole: true,
-        // outputStyle: 'compressed',
-        // outputStyle: 'compact',
-        // outputStyle: 'nested',
-        // outputStyle: 'expanded',
+        outputStyle: 'compact', // Other options: compressed, nested, expanded
         precision: 10
     }))
     .pipe($.sourcemaps.write({includeContent: false}))
@@ -156,10 +153,10 @@ gulp.task('styles', ['bowerFiles'], function () {
     .pipe($.filter('**/*.css')) // Filtering stream to only css files
     .pipe($.combineMediaQueries()) // Combines Media Queries
     .pipe(reload({ stream:true })) // Inject Styles when style file is created
-    // .pipe($.rename({ suffix: '.min' }))
-    // .pipe($.uglifycss({
-    //     maxLineLen: 80
-    // }))
+    .pipe($.rename({ suffix: '.min' }))
+    .pipe($.uglifycss({
+        maxLineLen: 80
+    }))
     .pipe(gulp.dest(temp + '/assets/css'))
     .pipe(reload({stream:true})) // Inject Styles when min style file is created
     //.pipe($.notify({ message: 'Styles task complete', onLast: true }))
@@ -174,7 +171,7 @@ gulp.task('vendorsJs', ['bowerFiles'], function() {
     return gulp.src('src/assets/js/vendor/*.js')
         .pipe($.filter('*.js'))
         .pipe($.concat('vendors.js'))
-        .pipe(gulp.dest(temp + '/assets/js'))
+        // .pipe(gulp.dest(temp + '/assets/js'))
         .pipe($.rename( {
             basename: 'vendors',
             suffix: '.min'
@@ -194,7 +191,7 @@ gulp.task('vendorsJs', ['bowerFiles'], function() {
 gulp.task('scriptsJs', function() {
     return gulp.src(['src/assets/js/**/*.js', '!src/assets/js/vendor/**/*', ])
         .pipe($.concat('script.js'))
-        .pipe(gulp.dest(temp + '/assets/js'))
+        // .pipe(gulp.dest(temp + '/assets/js'))
         .pipe($.rename( {
             basename: 'script',
             suffix: '.min'
@@ -210,28 +207,15 @@ gulp.task('scriptsJs', function() {
 /**
  * Images
  *
- * Look at src/assets/img, optimize the images and send them to the appropriate place
+ * Look at src/assets/img, optimize the images and send them to the staging folder
  */
 gulp.task('images', function() {
     // Add the newer pipe to pass through newer images only
-    return gulp.src(['src/assets/img/raw/**/*.{png,jpg,jpeg,gif}'])
-        .pipe($.newer('src/assets/img/'))
-        .pipe($.rimraf({ force: true }))
+    return gulp.src(['src/assets/img/**/*.{png,jpg,jpeg,gif}'])
+        .pipe($.newer(temp + '/assets/img'))
         .pipe($.imagemin({ optimizationLevel: 7, progressive: true, interlaced: true }))
-        .pipe(gulp.dest(temp + '/assets/img/'))
+        .pipe(gulp.dest(temp + '/assets/img'))
         //.pipe($.notify( { message: 'Images task complete', onLast: true } ) );
-});
-
-/**
- * Fonts
- *
- * Look at src/assets/fonts, optimize the images and send them to the appropriate place
- */
-gulp.task('fonts', function() {
-    return gulp.src(['src/bower_components/**/*.{woff,woff2,ttf,otf,eot,svg}', '!src/bower_components/bootstrap/**/*'])
-        .pipe($.flatten())
-        .pipe(gulp.dest(temp + '/assets/fonts/'))
-        //.pipe($.notify( { message: 'Fonts task complete', onLast: true } ) );
 });
 
 /**
@@ -269,20 +253,8 @@ gulp.task('cleanFinal', function() {
   */
 gulp.task('buildFiles', function() {
     return gulp.src(['src/**/*.{php,html}', '!src/bower_components/**/*'])
-        .pipe($.debug())
         .pipe(gulp.dest(temp))
         //.pipe($.notify({ message: 'Copy from buildFiles complete', onLast: true }));
-});
-
-/**
- * Images
- *
- * Look at src/images, optimize the images and send them to the appropriate place
- */
-gulp.task('buildImages', ['images'], function() {
-    return gulp.src(['assets/img/**/*', '!assets/images/raw/**'])
-        .pipe(gulp.dest(build + 'assets/img/'))
-        //.pipe($.notify({ message: 'Images copied to build folder', onLast: true }));
 });
 
  /**
@@ -290,11 +262,13 @@ gulp.task('buildImages', ['images'], function() {
   *
   * Taking the build folder, which has been cleaned, containing optimized files and zipping it up to send out as an installable theme
   */
-gulp.task('buildZip', function () {
-    //return gulp.src([build + '/**/', './.jshintrc', './.bowerrc', './.gitignore' ])
-    return gulp.src(build + '/**/')
+gulp.task('zip', ['styles', 'vendorsJs', 'scriptsJs', 'images', 'buildFiles'], function () {
+    return gulp.src(temp + '/**/*')
         .pipe($.zip(project + '.zip'))
-        .pipe(gulp.dest('./'))
+        .pipe($.size({
+            title: 'ZIP Created'
+        }))
+        .pipe(gulp.dest('.'))
         //.pipe($.notify({ message: 'Zip task complete', onLast: true }));
 });
 
@@ -303,7 +277,7 @@ gulp.task('buildZip', function () {
   *
   * Uploads the build folder, which has been cleaned and optimized, to a FTP server
   */
-gulp.task('ftp', function () {
+gulp.task('ftp', ['clean'], function () {
     var conn = ftp.create( {
         host: ftpInfo.host,
         user: ftpInfo.user,
@@ -328,8 +302,9 @@ gulp.task('ftp', function () {
  */
 
 
-gulp.task('buildTest', ['styles', 'vendorsJs', 'scriptsJs', 'images', 'fonts', 'buildFiles', 'buildImages', 'buildZip'], function() {
-    var vendorJsFilter = $.filter(['assets/js/vendors.js'], {restore: true});
+// Package Distributable Theme
+gulp.task('build', ['styles', 'vendorsJs', 'scriptsJs', 'images', 'buildFiles'], function(cb) {
+    // var vendorJsFilter = $.filter(['assets/js/vendors.js'], {restore: true});
 
     // return gulp.src(temp + '/**/*')
         // .pipe(vendorJsFilter)
@@ -341,29 +316,31 @@ gulp.task('buildTest', ['styles', 'vendorsJs', 'scriptsJs', 'images', 'fonts', '
         // .pipe(vendorJsFilter.restore)
         // .pipe(gulp.dest('dist'));
 });
+gulp.task('build:zip', ['build', 'zip']);
+gulp.task('build:ftp', ['build', 'ftp']);
 
-// Package Distributable Theme
-gulp.task('build', ['styles', 'vendorsJs', 'scriptsJs', 'images', 'fonts', 'buildFiles', 'buildImages', 'buildZip'], function(cb) {
-    var vendorJsFilter = $.filter(['assets/js/vendors.js'], {restore: true});
-    var cssFilter = $.filter(['assets/*.css'], {restore: true});
 
-    return gulp.src(temp + '/**/*')
-        .pipe(vendorJsFilter)
-        // Minify all the JS
-        .pipe($.uglify())
-        .pipe(vendorJsFilter.restore)
-        .pipe(cssFilter)
-        .pipe($.uglifycss({
-            maxLineLen: 80
-        }))
-        .pipe(cssFilter.restore)
-        .pipe(gulp.dest('dist'));
-});
+// gulp.task('build', ['styles', 'vendorsJs', 'scriptsJs', 'images', 'buildFiles'], function(cb) {
+//     var vendorJsFilter = $.filter(['assets/js/vendors.js'], {restore: true});
+//     var cssFilter = $.filter(['assets/*.css'], {restore: true});
 
+//     return gulp.src(temp + '/**/*')
+//         .pipe(vendorJsFilter)
+//         // Minify all the JS
+//         .pipe($.uglify())
+//         .pipe(vendorJsFilter.restore)
+//         .pipe(cssFilter)
+//         .pipe($.uglifycss({
+//             maxLineLen: 80
+//         }))
+//         .pipe(cssFilter.restore)
+//         .pipe(gulp.dest('dist'));
+// });
 
 // Watch Task
-gulp.task('default', ['styles', 'vendorsJs', 'scriptsJs', 'images', 'browser-sync'], function () {
-    gulp.watch('./assets/img/raw/**/*', ['images']);
-    gulp.watch('./assets/css/**/*.scss', ['styles']);
-    gulp.watch('./assets/js/**/*.js', ['scriptsJs', browserSync.reload]);
+gulp.task('default', ['build', 'browser-sync'], function () {
+    gulp.watch('src/assets/img/**/*', ['images']);
+    gulp.watch('src/assets/css/**/*.scss', ['styles']);
+    gulp.watch('src/assets/js/**/*.js', ['scriptsJs', browserSync.reload]);
+    gulp.watch('bower.json', ['bowerFiles', browserSync.reload]);
 });

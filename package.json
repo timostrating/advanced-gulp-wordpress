@@ -39,6 +39,7 @@
     "gulp-zip": "^2.0.3",
     "main-bower-files": "^2.9.0",
     "tiny-lr": "0.0.7",
+    "uglify-save-license": "^0.4.1",
     "vinyl-ftp": "^0.4.5"
   }
 }

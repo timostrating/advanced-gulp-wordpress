@@ -46,7 +46,7 @@ var project = 'neat', // Project name, used for build zip.
 
 // Load plugins
 var $ = require('gulp-load-plugins')({
-    pattern: ['gulp-*', 'main-bower-files']
+    pattern: ['gulp-*', 'main-bower-files', 'uglify-save-license']
 });
 var gulp         = require('gulp'),
     browserSync  = require('browser-sync'), // Asynchronous browser loading on .scss file changes
@@ -179,7 +179,9 @@ gulp.task('vendorsJs', ['bowerFiles'], function() {
             basename: 'vendors',
             suffix: '.min'
         }))
-        .pipe($.uglify())
+        .pipe($.uglify({
+            preserveComments: $.uglifySaveLicense
+        }))
         .pipe(gulp.dest(temp + '/assets/js/'))
         //.pipe($.notify({ message: 'Vendor scripts task complete', onLast: true }));
 });
@@ -190,15 +192,17 @@ gulp.task('vendorsJs', ['bowerFiles'], function() {
  * Look at src/js and concatenate those files, send them to assets/js where we then minimize the concatenated file.
  */
 gulp.task('scriptsJs', function() {
-    return gulp.src('src/assets/js/custom/*.js')
-        .pipe($.concat('custom.js'))
+    return gulp.src(['src/assets/js/**/*.js', '!src/assets/js/vendor/**/*', ])
+        .pipe($.concat('script.js'))
         .pipe(gulp.dest(temp + '/assets/js'))
-        // .pipe($.rename( {
-        //     basename: 'custom',
-        //     suffix: '.min'
-        // }))
-        // .pipe($.uglify())
-        // .pipe(gulp.dest('./assets/js/'))
+        .pipe($.rename( {
+            basename: 'script',
+            suffix: '.min'
+        }))
+        .pipe($.uglify({
+            preserveComments: $.uglifySaveLicense
+        }))
+        .pipe(gulp.dest(temp + '/assets/js/'))
         //.pipe($.notify({ message: 'Custom scripts task complete', onLast: true }));
 });
 

@@ -99,3 +99,83 @@
      @media (min-width: 1500px) { @content; }
    }
  }
+ 
+ 
+ 
+ /*
+  * @max mixin 
+  * shortversions of the media queries 
+  */
+ @mixin max($point) {
+    @if $point == "xs" {
+      @media (max-width: $screen-xs) { @content; }
+    }
+   @if $point == "sm" {
+     @media (max-width: $screen-sm) { @content; }
+   }
+   @if $point == "md" {
+     @media (max-width: $screen-md) { @content; }
+   }
+   @if $point == "lg" {
+     @media (max-width: $screen-lg) { @content; }
+   }
+ }
+
+ 
+ /*
+  * @min mixin 
+  * shortversions of the media queries 
+  */
+ @mixin min($point) {
+		@if $point == "xs" {
+			@media (min-width: $screen-xs) { @content; }
+		}
+	 @if $point == "sm" {
+		 @media (min-width: $screen-sm) { @content; }
+	 }
+	 @if $point == "md" {
+		 @media (min-width: $screen-md) { @content; }
+	 }
+	 @if $point == "lg" {
+		 @media (min-width: $screen-lg) { @content; }
+	 }
+ }
+ 
+ 
+ 
+ /*
+  * @fexbox mixin 
+  * near bulletproof felxbox
+  */
+ @mixin flexbox() {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+}
+
+@mixin flex($values) {
+  -webkit-box-flex: $values;
+  -moz-box-flex:  $values;
+  -webkit-flex:  $values;
+  -ms-flex:  $values;
+  flex:  $values;
+}
+
+@mixin order($val) {
+  -webkit-box-ordinal-group: $val;
+  -moz-box-ordinal-group: $val;
+  -ms-flex-order: $val;
+  -webkit-order: $val;
+  order: $val;
+}
+
+.flexbox {
+  @include flexbox();
+}
+
+.flex {
+  @include flex(1 100px);
+  @include order(2);
+}
